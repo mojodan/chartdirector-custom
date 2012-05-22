@@ -44,6 +44,12 @@ c.addHLOC('0x008000', '0xcc0000')
 # green/red/grey for up/down/flat days
 c.addVolBars(75, '0x99ff99', '0xff9999', '0x808080')
 
+# Add the evolving high and low as line indicators to the chart
+hod = [max(es_high[:i+1]) for i, v in enumerate(es_high)]
+lod = [min(es_low[:i+1]) for i, v in enumerate(es_low)]
+c.addLineLayer(c, hod, '0x008000', 'HOD')
+c.addLineLayer(c, lod, '0x008000', 'LOD')
+
 # Output the chart
 print("Content-type: image/png\n")
 binaryPrint(c.makeChart2(PNG))
