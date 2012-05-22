@@ -35,7 +35,7 @@ c.addTitle("Basket Divergences")
 c.setData(ts, es_high, es_low, es_open, es_close, es_vol, None)
 
 # Add the main chart with 240 pixels in height
-c.addMainChart(600)
+es_chart = c.addMainChart(600)
 
 # Add HLOC symbols to the main chart, using green/red for up/down days
 c.addHLOC('0x008000', '0xcc0000')
@@ -47,8 +47,8 @@ c.addVolBars(75, '0x99ff99', '0xff9999', '0x808080')
 # Add the evolving high and low as line indicators to the chart
 hod = [max(es_high[:i+1]) for i, v in enumerate(es_high)]
 lod = [min(es_low[:i+1]) for i, v in enumerate(es_low)]
-c.addLineLayer(c, hod, '0x008000', 'HOD')
-c.addLineLayer(c, lod, '0x008000', 'LOD')
+c.addLineIndicator2(es_chart, hod, '0x008000', 'HOD')
+c.addLineIndicator2(es_chart, lod, '0x008000', 'LOD')
 
 # Output the chart
 print("Content-type: image/png\n")
