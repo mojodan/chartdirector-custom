@@ -12,18 +12,18 @@ hb = lookup_instrument('B_H60x3')
 lb = lookup_instrument('B_L60x3')
 
 # Trading Date
-trade_date = datetime.date(20012,5,17)
+trade_date = datetime.date(2012,5,17)
 
 # Reading the instrument data for the day
 bars = getBarMin01(es, trade_date)
 
 # {'instrument', 'when', 'mm_in_day', 'open', 'high', 'low', 'close', 'volume', 'op', etc }
-ts = [chartTime(d['when'].year, d['when'].month, d['when'].day, d['when'].hour, d['when'].minute, 0) for d in es]
-es_open = [x['open'] for x in es]
-es_high = [x['high'] for x in es]
-es_low = [x['low'] for x in es]
-es_close = [x['close'] for x in es]
-es_vol = [x['volume'] for x in es]
+ts = [chartTime(d.when.year, d.when.month, d.when.day, d.when.hour, d.when.minute, 0) for d in bars]
+es_open = [x.open for x in bars]
+es_high = [x.high for x in bars]
+es_low = [x.low for x in bars]
+es_close = [x.close for x in bars]
+es_vol = [x.volume for x in bars]
 
 
 c = FinanceChart(1024)
