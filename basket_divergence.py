@@ -1,10 +1,15 @@
 #!/usr/bin/python
+import cgi
 import setup_env
 import datetime
 from FinanceChart import *
 from cashflow.trading.helpers import lookup_instrument, getBarMin01, mm_in_day
 from cashflow.trading.models import BarMin01
 
+dd = cgi.FieldStorage()
+year = datetime.datetime.now().year
+month = datetime.datetime.now().month
+day = datetime.datetime.now().day
 
 # Locate the high and low basket instruments (custom instruments precalculated by populate_basket)
 es = lookup_instrument('ES')
@@ -12,7 +17,13 @@ hb = lookup_instrument('B_H60x3')
 lb = lookup_instrument('B_L60x3')
 
 # Trading Date
-trade_date = datetime.date(2012,5,17)
+if dd.has_key('day'):
+    day = int(dd['day'].value)
+if dd.has_key('month'):
+    month = int(dd['month'].value)
+if dd.has_key('year'):
+    year = int(dd['year'].value)
+trade_date = datetime.date(year,month,day)
 
 # Reading the instrument data for the day
 bars = getBarMin01(es, trade_date)
@@ -25,11 +36,17 @@ es_low = [x.low for x in bars]
 es_close = [x.close for x in bars]
 es_vol = [x.volume for x in bars]
 
+# Basket Data gathering
+bars = getBarMin01(hb, trade_date)
+hb_data = [x.close for x in bars]
+bars = getBarMin01(lb, trade_date)
+lb_data = [x.close for x in bars]
+
 
 c = FinanceChart(1024)
 
 # Add a title to the chart
-c.addTitle("Basket Divergences")
+c.addTitle("Basket Divergences - %s" % trade_date.strftime('%D (%a)'))
 
 # Set the data into the finance chart object
 c.setData(ts, es_high, es_low, es_open, es_close, es_vol, None)
@@ -42,13 +59,33 @@ c.addHLOC('0x008000', '0xcc0000')
 
 # Add a 75 pixels volume bars sub-chart to the bottom of the main chart, using
 # green/red/grey for up/down/flat days
-c.addVolBars(75, '0x99ff99', '0xff9999', '0x808080')
+#c.addVolBars(75, '0x99ff99', '0xff9999', '0x808080')
+c.addVolIndicator(75, '0x99ff99', '0xff9999', '0x808080')
 
 # Add the evolving high and low as line indicators to the chart
 hod = [max(es_high[:i+1]) for i, v in enumerate(es_high)]
 lod = [min(es_low[:i+1]) for i, v in enumerate(es_low)]
-c.addLineIndicator2(es_chart, hod, '0x008000', 'HOD')
-c.addLineIndicator2(es_chart, lod, '0x008000', 'LOD')
+c.addLineIndicator2(es_chart, hod, '0xFF6600', 'HOD')
+c.addLineIndicator2(es_chart, lod, '0xFF6600', 'LOD')
+
+# Initial Balance High and Low
+ib_high = [NoValue for x in xrange(60)] + [max(es_high[:60]) for x in xrange(390-60)]
+ib_low = [NoValue for x in xrange(60)] + [min(es_low[:60]) for x in xrange(390-60)]
+ll_ib_high = c.addLineIndicator2(es_chart, ib_high, '0xCC9900', 'IBH')
+ll_ib_high.addCustomDataLabel(0,389,"IBH", "Arial", 8, 0x3D5AA3, 0)
+ll_ib_low = c.addLineIndicator2(es_chart, ib_low, '0xCC9900', 'IBL')
+#ll_ib_low = es_chart.addLineLayer2()
+#ll_ib_low.addDataSet(ib_low, 0xFFFF00)
+ll_ib_low.addCustomDataLabel(0,389,"IBL", "Arial", 8, 0x3D5AA3, 0)
+
+
+ll_lb = es_chart.addLineLayer2()
+ll_lb.addDataSet(lb_data, 0xff0000)
+ll_lb.setUseYAxis2(True)
+es_chart.yAxis2().setLinearScale(0, 40, 5)
+ll_hb = es_chart.addLineLayer2()
+ll_hb.addDataSet(hb_data, 0x3333cc)
+ll_hb.setUseYAxis2(True)
 
 # Output the chart
 print("Content-type: image/png\n")
