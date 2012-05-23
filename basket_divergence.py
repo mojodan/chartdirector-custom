@@ -13,6 +13,7 @@ day = datetime.datetime.now().day
 
 # Locate the high and low basket instruments (custom instruments precalculated by populate_basket)
 es = lookup_instrument('ES')
+vb = lookup_instrument('ESH2_VB')
 hb = lookup_instrument('B_H60x3')
 lb = lookup_instrument('B_L60x3')
 
@@ -24,6 +25,13 @@ if dd.has_key('month'):
 if dd.has_key('year'):
     year = int(dd['year'].value)
 trade_date = datetime.date(year,month,day)
+
+# Other paraemetres
+width = 1200
+if dd.has_key('width'):
+    width = int(dd['width'].value)
+if width < 500:
+    width = 1200
 
 # Reading the instrument data for the day
 bars = getBarMin01(es, trade_date)
@@ -43,7 +51,16 @@ bars = getBarMin01(lb, trade_date)
 lb_data = [x.close for x in bars]
 
 
-c = FinanceChart(1024)
+# Volume Breakdown Data
+bars = getBarMin01(vb, trade_date)
+vb_open = [0 for x in bars]
+vb_high = [x.high for x in bars]
+vb_low = [x.low for x in bars]
+vb_close = [x.close for x in bars]
+
+
+#c = FinanceChart(1024)
+c = FinanceChart(2200)
 
 # Add a title to the chart
 c.addTitle("Basket Divergences - %s" % trade_date.strftime('%D (%a)'))
@@ -55,12 +72,13 @@ c.setData(ts, es_high, es_low, es_open, es_close, es_vol, None)
 es_chart = c.addMainChart(600)
 
 # Add HLOC symbols to the main chart, using green/red for up/down days
-c.addHLOC('0x008000', '0xcc0000')
+#c.addHLOC('0x008000', '0xcc0000')
+c.addCandleStick('0x008000', '0xcc0000')
 
 # Add a 75 pixels volume bars sub-chart to the bottom of the main chart, using
 # green/red/grey for up/down/flat days
 #c.addVolBars(75, '0x99ff99', '0xff9999', '0x808080')
-c.addVolIndicator(75, '0x99ff99', '0xff9999', '0x808080')
+#c.addVolIndicator(75, '0x99ff99', '0xff9999', '0x808080')
 
 # Add the evolving high and low as line indicators to the chart
 hod = [max(es_high[:i+1]) for i, v in enumerate(es_high)]
@@ -86,6 +104,12 @@ es_chart.yAxis2().setLinearScale(0, 40, 5)
 ll_hb = es_chart.addLineLayer2()
 ll_hb.addDataSet(hb_data, 0x3333cc)
 ll_hb.setUseYAxis2(True)
+
+
+# Add the volume break down layer if data is present
+if len(vb_open) == 390:
+    vb_chart = c.addBarIndicator(175, [], 0x000000, "Volume Breakdown")
+    ll_vb = vb_chart.addCandleStickLayer(vb_high, vb_low, vb_open, vb_close, 0x008000, 0xcc0000)
 
 # Output the chart
 print("Content-type: image/png\n")
